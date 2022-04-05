@@ -1,5 +1,7 @@
 library(ggplot2)
 library(DPMUnc)
+library(mclust)
+library(mcclust)
 
 source("scripts/utils.R")
 
