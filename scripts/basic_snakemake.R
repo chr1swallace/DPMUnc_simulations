@@ -1,4 +1,3 @@
-library(ggplot2)
 library(DPMUnc)
 library(mclust)
 library(mcclust)
@@ -8,17 +7,17 @@ source("scripts/utils.R")
 generate_basic_uncertain_data <- function(n, d, k, var_latents, var_means, noise_factor) {
   classes = sample(1:k, n, replace=TRUE)
   simulation_df = data.frame(class = classes, sample_id = paste0("sample_", 1:n))
-  
+
   obsVars_df = data.frame(matrix(rchisq(n*d,1), nrow=n, ncol=d)) * noise_factor
   colnames(obsVars_df) = paste0("sigmasq", 1:d)
   simulation_df = cbind(simulation_df, obsVars_df)
-  
+
   group_means = data.frame(matrix(rnorm(d*k, mean=0, sd=sqrt(var_means)), nrow=k, ncol=d))
   colnames(group_means) = paste0("mu", 1:d)
   group_means$class = 1:k
-  
+
   simulation_df = merge(simulation_df, group_means, by="class")
-  
+
   true_noise = data.frame(matrix(rnorm(n*d, sd=sqrt(var_latents)), nrow=n, ncol=d))
   colnames(true_noise) = paste0("z", 1:d, "_minus_mu", 1:d)
   latents = simulation_df[, paste0("mu", 1:d)] + true_noise
@@ -30,41 +29,41 @@ generate_basic_uncertain_data <- function(n, d, k, var_latents, var_means, noise
   colnames(observation_noise) = paste0("x", 1:d, "_minus_z", 1:d)
   observed = observation_noise + latents
   colnames(observed) = paste0("x", 1:d)
-  
+
   simulation_df = cbind(simulation_df, observation_noise)
   simulation_df = cbind(simulation_df, observed)
-  
+
   rownames(simulation_df) = simulation_df$sample_id
   head(simulation_df)
 
   obsData = as.matrix(simulation_df[, paste0("x", 1:d)])
   obsVars = as.matrix(simulation_df[, paste0("sigmasq", 1:d)])
-  
+
   scaled = DPMUnc::scale_data(obsData, obsVars)
-  
+
   scale_to_var1 <- function(mat) {
     scale(mat, attr(scaled$data, "scaled:center"), attr(scaled$data, "scaled:scale"))
   }
-  
+
   obsData = as.matrix(scaled$data)
   obsVars = as.matrix(scaled$vars)
-  
+
   pca = prcomp(obsData)
   print(summary(pca))
   pca_df = data.frame(pca$x)
   colnames(pca_df) = paste0("xPC", 1:d)
-  
+
   rescaled_latents = data.frame(scale(latents, center = pca$center, scale=pca$scale) %*% pca$rotation)
   colnames(rescaled_latents) = paste0("zPC", 1:d)
-  
+
   rescaled_centers = data.frame(scale(simulation_df[, paste0("mu", 1:d)],
                                       center = pca$center, scale=pca$scale) %*% pca$rotation)
   colnames(rescaled_centers) = paste0("muPC", 1:d)
-  
+
   simulation_df = cbind(simulation_df, pca_df, rescaled_latents, rescaled_centers)
-  
+
   head(simulation_df)
-    
+
   return (list(df=simulation_df,
                pca=pca,
                obsVars=obsVars,
@@ -72,35 +71,24 @@ generate_basic_uncertain_data <- function(n, d, k, var_latents, var_means, noise
                scale_to_var1=scale_to_var1))
 }
 
-n=snakemake@wildcards[['n']]
-seed=snakemake@wildcards[['seed']]
-d=snakemake@wildcards[['d']]
-k=snakemake@wildcards[['k']]
-var_latents=snakemake@wildcards[['var_latents']]
-var_means=snakemake@wildcards[['var_means']]
-noise_factor=snakemake@wildcards[['noise_factor']]
+n=as.numeric(snakemake@wildcards[['n']])
+seed=as.numeric(snakemake@wildcards[['seed']])
+d=as.numeric(snakemake@wildcards[['d']])
+k=as.numeric(snakemake@wildcards[['k']])
+var_latents=as.numeric(snakemake@wildcards[['var_latents']])
+var_means=as.numeric(snakemake@wildcards[['var_means']])
+noise_factor=as.numeric(snakemake@wildcards[['noise_factor']])
 
 set.seed(seed)
 simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latents, var_means=var_means, noise_factor=noise_factor)
 
 # The palette with black:
-cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#D55E00", "#0072B2", "#CC79A7")
-
-g = ggplot(simulation$df, aes(x=zPC1, y=zPC2, colour=factor({class}))) +
-  geom_point(size=4, shape=1) +
-  geom_point(size=4, mapping=aes(x=xPC1, y=xPC2)) +
-  geom_segment(aes(xend=xPC1, yend=xPC2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  scale_colour_manual(values=cbbPalette) +
-  geom_point(size=4, shape=2, mapping=aes(x=muPC1, y=muPC2)) +
-  stat_ellipse() +
-  labs(x="PC1", y="PC2") +
-  theme(legend.position = "none")
-ggsave(snakemake@output[["pca"]], g)
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#D55E00", "#0072B2", "#CC79A7", "#c4a4a8")
 
 scaled_latents = simulation$scale_to_var1(simulation$df[, paste0("z", 1:d)])
 
-kmeans_solution = kmeans(simulation$obsData, centers=4)
-kmeans_solution_latents = kmeans(scaled_latents, centers=4)
+kmeans_solution = kmeans(simulation$obsData, centers=k)
+kmeans_solution_latents = kmeans(scaled_latents, centers=k)
 
 mclust_solution <- Mclust(simulation$obsData, x=mclustBIC(simulation$obsData))
 mclust_solution_latents <- Mclust(scaled_latents, x=mclustBIC(scaled_latents))
@@ -109,7 +97,6 @@ outputdir = dirname(snakemake@output[["clusterAllocations"]])
 DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed, nIts=10000)
 result = calc_psms(outputdir)
 calls=maxpear(result$bigpsm, method="comp")
-
 outputdir = dirname(snakemake@output[["clusterAllocationsNovar"]])
 DPMUnc(simulation$obsData, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000)
 result_novar = calc_psms(outputdir)
@@ -140,5 +127,5 @@ results = data.frame(method = rep(c("kmeans", "mclust", "DPMUnc", "DPMUnc_novar"
 
 results
 
-save(snakemake@output[["rds"]])
+save(list=ls(), file=snakemake@output[["rda"]])
 write.csv(results, snakemake@output[["summary"]])

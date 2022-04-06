@@ -1,0 +1,10 @@
+{
+    "__default__" :
+    {
+        "account" : "CWALLACE-SL2-CPU",
+        "time" : "01:00:00",
+        "cpus-per-task" : 1,
+        "partition" : "icelake",
+        "job" : "{rule}",
+    }
+}
