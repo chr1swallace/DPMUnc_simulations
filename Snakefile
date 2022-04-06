@@ -8,12 +8,12 @@ wildcard_constraints:
 
 rule simplex_simulations:
     input:
-        expand("results/simplex/{d}_{k}_{var_latents}_{noise_factor}/{seed}/results.csv",
+        expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
                seed=range(20),
                d=2,
                noise_factor=[5, 7, 10, 13],
                var_latents=[4, 9, 12, 16]),
-        expand("results/simplex/{d}_{k}_{var_latents}_{noise_factor}/{seed}/results.csv",
+        expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
                seed=range(20),
                d=[3, 5, 10, 20],
                noise_factor=[5, 10],
@@ -32,11 +32,11 @@ rule test:
 
 rule simplex_simulation:
     output:
-        clusterAllocations="results/simplex/{n}_{d}_{k}_{var_latents}_{noise_factor}/{seed}/{seed}/simple/clusterAllocations.csv",
-        clusterAllocationsNovar="results/simplex/{n}_{d}_{k}_{var_latents}_{noise_factor}/{seed}/{seed}/novar/clusterAllocations.csv",
-        clusterAllocationsLatents="results/simplex/{n}_{d}_{k}_{var_latents}_{noise_factor}/{seed}/{seed}/latents/clusterAllocations.csv",
-        summary="results/simplex/{n}_{d}_{k}_{var_latents}_{noise_factor}/{seed}/results.csv",
-        rda="results/simplex/{n}_{d}_{k}_{var_latents}_{noise_factor}/{seed}/results.rda",
+        clusterAllocations="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/{seed}/simple/clusterAllocations.csv",
+        clusterAllocationsNovar="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/{seed}/novar/clusterAllocations.csv",
+        clusterAllocationsLatents="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/{seed}/latents/clusterAllocations.csv",
+        summary="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
+        rda="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.rda",
     script:
         "scripts/simplex_simulation.R"
 

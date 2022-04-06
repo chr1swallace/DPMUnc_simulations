@@ -1,3 +1,4 @@
+library(cluster)
 library(DPMUnc)
 library(mclust)
 library(mcclust)
@@ -12,7 +13,6 @@ n_simplex <- function(n) {
 
   df = data.frame(do.call(rbind, all_points))
   colnames(df) = paste0("dim", 1:n)
-  print(dist(df))
   return (df)
 }
 
@@ -90,63 +90,85 @@ d=as.numeric(snakemake@wildcards[['d']])
 var_latents=as.numeric(snakemake@wildcards[['var_latents']])
 noise_factor=as.numeric(snakemake@wildcards[['noise_factor']])
 k = d + 1
-n = k * 20
+n = k * 10
 
 set.seed(seed)
 group_means = data.frame(n_simplex(d))
 simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latents, noise_factor=noise_factor,
                                            group_means=group_means * 10)
+true_k = length(unique(simulation$df$class))
+
+produce_summary <- function(method, x_or_z, clusters) {
+    list(method=method,
+         data=x_or_z,
+         estimated_k=length(unique(clusters)),
+         ari=adjustedRandIndex(clusters, simulation$df$class),
+         seed=seed,
+         n=n,
+         d=d,
+         k=k,
+         true_k=true_k,
+         noise_factor=noise_factor,
+         var_latents=var_latents)
+}
 
 scaled_latents = simulation$scale_to_var1(simulation$df[, paste0("z", 1:d)])
 
-true_k = length(unique(simulation$df$class))
-kmeans_solution = kmeans(simulation$obsData, centers=true_k)
-kmeans_solution_latents = kmeans(scaled_latents, centers=true_k)
+gap_stat <- clusGap(simulation$obsData,
+                    FUN = kmeans,
+                    nstart = 25,
+                    K.max = k * 2,
+                    B = 50)
+print(gap_stat)
+best_K = which.max(gap_stat$Tab[, 3])
+kmeans_solution = kmeans(simulation$obsData, centers=best_K, nstart=25)
+summary_kmeans = produce_summary("kmeans", "x", kmeans_solution$cluster)
+
+kmeans_solution_latents = kmeans(scaled_latents, centers=best_K, nstart=25)
+summary_kmeans_latents = produce_summary("kmeans", "z", kmeans_solution_latents$cluster)
+
+kmeans_solution_true = kmeans(simulation$obsData, centers=true_k, nstart=25)
+summary_kmeans_true = produce_summary("kmeans_true", "x", kmeans_solution_true$cluster)
+
+kmeans_solution_true_latents = kmeans(scaled_latents, centers=true_k, nstart=25)
+summary_kmeans_true_latents = produce_summary("kmeans_true", "z", kmeans_solution_true_latents$cluster)
 
 mclust_solution <- Mclust(simulation$obsData, x=mclustBIC(simulation$obsData))
+summary_mclust = produce_summary("mclust", "x", mclust_solution$classification)
+
 mclust_solution_latents <- Mclust(scaled_latents, x=mclustBIC(scaled_latents))
+summary_mclust_latents = produce_summary("mclust", "z", mclust_solution_latents$classification)
 
 outputdir = dirname(snakemake@output[["clusterAllocations"]])
 DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed, nIts=10000)
 result = calc_psms(outputdir)
 calls=maxpear(result$bigpsm, method="comp")
+summary_dpmunc = produce_summary("DPMUnc", "x", calls$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsNovar"]])
 DPMUnc(simulation$obsData, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000)
 result_novar = calc_psms(outputdir)
 calls_novar=maxpear(result_novar$bigpsm, method="comp")
+summary_dpmuncnovar = produce_summary("DPMUnc_novar", "x", calls_novar$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsLatents"]])
 DPMUnc(scaled_latents, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000)
 result_latents = calc_psms(outputdir)
 calls_latents=maxpear(result_latents$bigpsm, method="comp")
+summary_dpmuncnovar_latents = produce_summary("DPMUnc_novar", "z", calls_latents$cl)
 
-results = data.frame(method = rep(c("kmeans", "mclust", "DPMUnc", "DPMUnc_novar"),
-                                  c(2,2,1,2)),
-                     data = rep(c("x", "z"), 4)[1:7],
-                     ari = c(adjustedRandIndex(kmeans_solution$cluster, simulation$df$class),
-                             adjustedRandIndex(kmeans_solution_latents$cluster, simulation$df$class),
-                             adjustedRandIndex(mclust_solution$classification, simulation$df$class),
-                             adjustedRandIndex(mclust_solution_latents$classification, simulation$df$class),
-                             adjustedRandIndex(calls$cl, simulation$df$class),
-                             adjustedRandIndex(calls_latents$cl, simulation$df$class),
-                             adjustedRandIndex(calls_novar$cl, simulation$df$class)),
-                     estimated_k = c(length(unique(kmeans_solution$cluster)),
-                                     length(unique(kmeans_solution_latents$cluster)),
-                                     length(unique(mclust_solution$classification)),
-                                     length(unique(mclust_solution_latents$classification)),
-                                     length(unique(calls$cl)),
-                                     length(unique(calls_latents$cl)),
-                                     length(unique(calls_novar$cl))),
-                     seed=seed,
-                     n=n,
-                     d=d,
-                     k=k,
-                     true_k=true_k,
-                     noise_factor=noise_factor,
-                     var_latents=var_latents)
-
+results = as.data.frame(do.call(rbind,
+                                list(summary_kmeans,
+                                     summary_kmeans_latents,
+                                     summary_kmeans_true,
+                                     summary_kmeans_true_latents,
+                                     summary_mclust,
+                                     summary_mclust_latents,
+                                     summary_dpmunc,
+                                     summary_dpmuncnovar,
+                                     summary_dpmuncnovar_latents)))
 results
+print(class(results))
 
-write.csv(results, snakemake@output[["summary"]])
+write.csv(apply(results, MARGIN=2, FUN=as.character), snakemake@output[["summary"]])
 save(list=ls(), file=snakemake@output[["rda"]])
