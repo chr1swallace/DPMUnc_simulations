@@ -105,8 +105,8 @@ seed = 20
 
 scaled_latents = simulation$scale_to_var1(simulation$df[, paste0("z", 1:d)])
 
-kmeans_solution = kmeans(simulation$obsData, centers=4)
-kmeans_solution_latents = kmeans(scaled_latents, centers=4)
+kmeans_solution = kmeans(simulation$obsData, centers=k)
+kmeans_solution_latents = kmeans(scaled_latents, centers=k)
 
 mclust_solution <- Mclust(simulation$obsData, x=mclustBIC(simulation$obsData))
 mclust_solution_latents <- Mclust(scaled_latents, x=mclustBIC(scaled_latents))
