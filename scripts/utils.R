@@ -14,7 +14,7 @@ save_pheatmap_png <- function(x, filename, width=1200, height=1000, res = 150) {
 }
 
 # From process_v2_functions.R
-calc_psm=function(x,burn=0.5) {
+raw_calc_psm=function(x,burn=0.5) {
   n=nrow(x)
   if(burn>0)
     x=x[ (burn*n) : n, , drop=FALSE]
@@ -31,6 +31,8 @@ calc_psm=function(x,burn=0.5) {
   psm=m/nrow(x)
   psm
 }
+
+calc_psm <- addMemoization(raw_calc_psm)
 
 adjust_labels_B_to_match_A <- function(calls_A, calls_B) {
     K_A = length(unique(calls_A))
@@ -84,7 +86,7 @@ get_ann_colors=function(calls, mclust_calls, obsData, verbose=TRUE) {
   list(ann=ann,colors=ann_colors)
 }
 
-raw_calc_psms <- function(datasets) {
+calc_psms <- function(datasets) {
     allocs=lapply(paste0(datasets, "/clusterAllocations.csv"), fread)## read the allocations
     # This line is essential for some reason
     allocs %<>% lapply(., function(x) as.matrix(x[1:nrow(x),]))
@@ -97,8 +99,6 @@ raw_calc_psms <- function(datasets) {
     #psms = lapply(trimmed_allocs, function(x) calc_psm(x, burn=0))
     return(list(bigpsm=bigpsm, psms=psms))
 }
-
-calc_psms <- addMemoization(raw_calc_psms)
 
 plot_ari_for_datasets <- function(combined_calls, name, width=1400, height=1500) {
     all_ari = matrix(0, nrow=ncol(combined_calls), ncol=ncol(combined_calls))

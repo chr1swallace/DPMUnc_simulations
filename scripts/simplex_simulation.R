@@ -99,6 +99,12 @@ simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latent
 true_k = length(unique(simulation$df$class))
 
 produce_summary <- function(method, x_or_z, clusters) {
+    print(paste0("Summarising results from method ", method))
+    print(class(clusters))
+    print(clusters)
+    print(length(clusters))
+    print(length(simulation$df$class))
+    print(dim(simulation$df))
     list(method=method,
          data=x_or_z,
          estimated_k=length(unique(clusters)),
@@ -140,9 +146,11 @@ mclust_solution_latents <- Mclust(scaled_latents, x=mclustBIC(scaled_latents))
 summary_mclust_latents = produce_summary("mclust", "z", mclust_solution_latents$classification)
 
 outputdir = dirname(snakemake@output[["clusterAllocations"]])
+print(dim(simulation$obsData))
 DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed, nIts=10000)
 result = calc_psms(outputdir)
 calls=maxpear(result$bigpsm, method="comp")
+print(dim(result$bigpsm))
 summary_dpmunc = produce_summary("DPMUnc", "x", calls$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsNovar"]])

@@ -8,16 +8,24 @@ wildcard_constraints:
 
 rule simplex_simulations:
     input:
-        expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
+        expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/full_results.csv",
                seed=range(20),
                d=2,
                noise_factor=[5, 7, 10, 13],
                var_latents=[4, 9, 12, 16]),
-        expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
+        expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/full_results.csv",
                seed=range(20),
                d=[3, 5, 10, 20],
                noise_factor=[5, 10],
                var_latents=[4, 12]),
+
+rule augment_results:
+    input:
+        rda="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.rda",
+    output:
+        summary="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/full_results.csv",
+    script:
+        "scripts/augment_results.R"
 
 rule test:
     input:
