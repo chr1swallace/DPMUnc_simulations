@@ -6,6 +6,14 @@ wildcard_constraints:
     d="\d+",
     k="\d+",
 
+rule simplex_plots:
+    input:
+        "simplex_results/full_results.csv",
+    output:
+        "simplex_results/summary_plot.png",
+    script:
+        "scripts/plot_results.R"
+
 rule simplex_simulations:
     input:
         expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
