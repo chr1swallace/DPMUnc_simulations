@@ -88,7 +88,7 @@ simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latent
                                            group_means=group_means * 10)
 true_k = length(unique(simulation$df$class))
 
-produce_summary <- function(method, x_or_z, clusters, inferred_k=TRUE) {
+produce_summary <- function(method, x_or_z, clusters, inferred_K=TRUE) {
     print(paste0("Summarising results from method ", method))
     print(class(clusters))
     print(clusters)
@@ -109,7 +109,7 @@ produce_summary <- function(method, x_or_z, clusters, inferred_k=TRUE) {
          inferred_K=inferred_K)
 }
 
-latents = simulation$df[, paste0("z", 1:d)]
+latents = as.matrix(simulation$df[, paste0("z", 1:d)])
 
 gap_stat <- clusGap(simulation$obsData,
                     FUN = kmeans,
