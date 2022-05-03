@@ -18,6 +18,10 @@ rule simplex_simulations:
                d=[3, 5, 10, 20],
                noise_factor=[5, 10],
                var_latents=[4, 12]),
+    output:
+        "simplex_results/full_results.csv",
+    shell:
+        "(head -n1 {input[0]} && cat {input} | grep -v 'method') | cut -d',' -f2- > {output}"
 
 rule test:
     input:
