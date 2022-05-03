@@ -5,6 +5,13 @@ library(mcclust)
 
 source("scripts/utils.R")
 
+# Cut a DPMUnc result at a specific K
+cut_at_k <- function(dpmunc_result, k) {
+    psm = dpmunc_result$bigpsm
+    hclust.comp = hclust(as.dist(1 - psm), method="complete")
+    calls_at_true_k = cutree(hclust.comp, k=k)
+}
+
 n_simplex <- function(n) {
   extra_point = (1 + sqrt(n+1))/n * rep(1, n)
   basis_elements = lapply(1:n, function(x) { y = rep(0, n); y[x] = 1; y})
@@ -53,36 +60,19 @@ generate_basic_uncertain_data <- function(n, d, k, var_latents, noise_factor, gr
   obsData = as.matrix(simulation_df[, paste0("x", 1:d)])
   obsVars = as.matrix(simulation_df[, paste0("sigmasq", 1:d)])
 
-  scaled = DPMUnc::scale_data(obsData, obsVars)
-
-  scale_to_var1 <- function(mat) {
-    scale(mat, attr(scaled$data, "scaled:center"), attr(scaled$data, "scaled:scale"))
-  }
-
-  obsData = as.matrix(scaled$data)
-  obsVars = as.matrix(scaled$vars)
-
   pca = prcomp(obsData)
   print(summary(pca))
   pca_df = data.frame(pca$x)
   colnames(pca_df) = paste0("xPC", 1:d)
 
-  rescaled_latents = data.frame(scale(latents, center = pca$center, scale=pca$scale) %*% pca$rotation)
-  colnames(rescaled_latents) = paste0("zPC", 1:d)
-
-  rescaled_centers = data.frame(scale(simulation_df[, paste0("mu", 1:d)],
-                                      center = pca$center, scale=pca$scale) %*% pca$rotation)
-  colnames(rescaled_centers) = paste0("muPC", 1:d)
-
-  simulation_df = cbind(simulation_df, pca_df, rescaled_latents, rescaled_centers)
+  simulation_df = cbind(simulation_df, pca_df)
 
   head(simulation_df)
 
   return (list(df=simulation_df,
                pca=pca,
                obsVars=obsVars,
-               obsData=obsData,
-               scale_to_var1=scale_to_var1))
+               obsData=obsData))
 }
 
 seed=as.numeric(snakemake@wildcards[['seed']])
@@ -98,7 +88,7 @@ simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latent
                                            group_means=group_means * 10)
 true_k = length(unique(simulation$df$class))
 
-produce_summary <- function(method, x_or_z, clusters) {
+produce_summary <- function(method, x_or_z, clusters, inferred_k=TRUE) {
     print(paste0("Summarising results from method ", method))
     print(class(clusters))
     print(clusters)
@@ -115,10 +105,11 @@ produce_summary <- function(method, x_or_z, clusters) {
          k=k,
          true_k=true_k,
          noise_factor=noise_factor,
-         var_latents=var_latents)
+         var_latents=var_latents,
+         inferred_K=inferred_K)
 }
 
-scaled_latents = simulation$scale_to_var1(simulation$df[, paste0("z", 1:d)])
+latents = simulation$df[, paste0("z", 1:d)]
 
 gap_stat <- clusGap(simulation$obsData,
                     FUN = kmeans,
@@ -130,37 +121,40 @@ best_K = which.max(gap_stat$Tab[, 3])
 kmeans_solution = kmeans(simulation$obsData, centers=best_K, nstart=25)
 summary_kmeans = produce_summary("kmeans", "x", kmeans_solution$cluster)
 
-kmeans_solution_latents = kmeans(scaled_latents, centers=best_K, nstart=25)
+kmeans_solution_latents = kmeans(latents, centers=best_K, nstart=25)
 summary_kmeans_latents = produce_summary("kmeans", "z", kmeans_solution_latents$cluster)
 
 kmeans_solution_true = kmeans(simulation$obsData, centers=true_k, nstart=25)
-summary_kmeans_true = produce_summary("kmeans_true", "x", kmeans_solution_true$cluster)
+summary_kmeans_true = produce_summary("kmeans", "x", kmeans_solution_true$cluster, FALSE)
 
-kmeans_solution_true_latents = kmeans(scaled_latents, centers=true_k, nstart=25)
-summary_kmeans_true_latents = produce_summary("kmeans_true", "z", kmeans_solution_true_latents$cluster)
+kmeans_solution_true_latents = kmeans(latents, centers=true_k, nstart=25)
+summary_kmeans_true_latents = produce_summary("kmeans", "z", kmeans_solution_true_latents$cluster, FALSE)
 
 mclust_solution <- Mclust(simulation$obsData, x=mclustBIC(simulation$obsData))
 summary_mclust = produce_summary("mclust", "x", mclust_solution$classification)
 
-mclust_solution_latents <- Mclust(scaled_latents, x=mclustBIC(scaled_latents))
+mclust_solution_latents <- Mclust(latents, x=mclustBIC(latents))
 summary_mclust_latents = produce_summary("mclust", "z", mclust_solution_latents$classification)
+
+summary_mclust_true = produce_summary("mclust", "x", Mclust(simulation$obsData, x=mclustBIC(simulation$obsData), G=true_k)$classification, FALSE)
+summary_mclust_latents_true = produce_summary("mclust", "z", Mclust(latents, x=mclustBIC(latents), G=true_k)$classification, FALSE)
 
 outputdir = dirname(snakemake@output[["clusterAllocations"]])
 print(dim(simulation$obsData))
-DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed, nIts=10000)
+DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed, nIts=10000, scaleData=FALSE)
 result = calc_psms(outputdir)
 calls=maxpear(result$bigpsm, method="comp")
 print(dim(result$bigpsm))
 summary_dpmunc = produce_summary("DPMUnc", "x", calls$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsNovar"]])
-DPMUnc(simulation$obsData, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000)
+DPMUnc(simulation$obsData, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000, scaleData=FALSE)
 result_novar = calc_psms(outputdir)
 calls_novar=maxpear(result_novar$bigpsm, method="comp")
 summary_dpmuncnovar = produce_summary("DPMUnc_novar", "x", calls_novar$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsLatents"]])
-DPMUnc(scaled_latents, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000)
+DPMUnc(latents, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000, scaleData=FALSE)
 result_latents = calc_psms(outputdir)
 calls_latents=maxpear(result_latents$bigpsm, method="comp")
 summary_dpmuncnovar_latents = produce_summary("DPMUnc_novar", "z", calls_latents$cl)
@@ -172,9 +166,14 @@ results = as.data.frame(do.call(rbind,
                                      summary_kmeans_true_latents,
                                      summary_mclust,
                                      summary_mclust_latents,
+                                     summary_mclust_true,
+                                     summary_mclust_latents_true,
                                      summary_dpmunc,
+                                     produce_summary("DPMUnc", "x", cut_at_k(result, true_k), FALSE),
                                      summary_dpmuncnovar,
-                                     summary_dpmuncnovar_latents)))
+                                     summary_dpmuncnovar_latents,
+                                     produce_summary("DPMUnc_novar", "x", cut_at_k(result_novar, true_k), FALSE),
+                                     produce_summary("DPMUnc_novar", "z", cut_at_k(result_latents, true_k), FALSE))))
 results
 print(class(results))
 

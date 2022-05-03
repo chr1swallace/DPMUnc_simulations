@@ -19,14 +19,6 @@ rule simplex_simulations:
                noise_factor=[5, 10],
                var_latents=[4, 12]),
 
-rule augment_results:
-    input:
-        rda="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.rda",
-    output:
-        summary="simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/full_results.csv",
-    script:
-        "scripts/augment_results.R"
-
 rule test:
     input:
         expand("results/{n}_{d}_{k}_{var_latents}_{var_means}_{noise_factor}_{seed}/results.csv",
