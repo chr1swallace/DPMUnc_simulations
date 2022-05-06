@@ -1,4 +1,4 @@
-localrules: test
+localrules: simplex_plots, simplex_simulations
 
 wildcard_constraints:
     seed="\d+",
@@ -17,15 +17,15 @@ rule simplex_plots:
 rule simplex_simulations:
     input:
         expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
-               seed=range(20),
+               seed=range(100),
                d=2,
                noise_factor=[5, 7, 10, 13],
                var_latents=[4, 9, 12, 16]),
-        expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
-               seed=range(20),
-               d=[3, 5, 10, 20],
-               noise_factor=[5, 10],
-               var_latents=[4, 12]),
+#       expand("simplex_results/{d}_{var_latents}_{noise_factor}/{seed}/results.csv",
+#              seed=range(20),
+#              d=[3, 5, 10, 20],
+#              noise_factor=[5, 10],
+#              var_latents=[4, 12]),
     output:
         "simplex_results/full_results.csv",
     shell:

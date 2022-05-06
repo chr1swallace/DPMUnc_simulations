@@ -86,6 +86,8 @@ set.seed(seed)
 group_means = data.frame(n_simplex(d))
 simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latents, noise_factor=noise_factor,
                                            group_means=group_means * 10)
+# Set hyperparameters for model
+alpha0 = 2; kappa0 = 0.5; beta0 = 0.2 * mean(apply(simulation$obsData, 2, var))
 true_k = length(unique(simulation$df$class))
 
 produce_summary <- function(method, x_or_z, clusters, inferred_K=TRUE) {
@@ -111,16 +113,13 @@ produce_summary <- function(method, x_or_z, clusters, inferred_K=TRUE) {
 
 latents = as.matrix(simulation$df[, paste0("z", 1:d)])
 
-gap_stat <- clusGap(simulation$obsData,
-                    FUN = kmeans,
-                    nstart = 25,
-                    K.max = k * 2,
-                    B = 50)
-print(gap_stat)
+gap_stat <- clusGap(simulation$obsData, FUN = kmeans, nstart = 25, K.max = k * 2, B = 50)
 best_K = which.max(gap_stat$Tab[, 3])
 kmeans_solution = kmeans(simulation$obsData, centers=best_K, nstart=25)
 summary_kmeans = produce_summary("kmeans", "x", kmeans_solution$cluster)
 
+gap_stat <- clusGap(latents, FUN = kmeans, nstart = 25, K.max = k * 2, B = 50)
+best_K = which.max(gap_stat$Tab[, 3])
 kmeans_solution_latents = kmeans(latents, centers=best_K, nstart=25)
 summary_kmeans_latents = produce_summary("kmeans", "z", kmeans_solution_latents$cluster)
 
@@ -141,20 +140,26 @@ summary_mclust_latents_true = produce_summary("mclust", "z", Mclust(latents, x=m
 
 outputdir = dirname(snakemake@output[["clusterAllocations"]])
 print(dim(simulation$obsData))
-DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed, nIts=10000, scaleData=FALSE)
+DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed,
+       kappa0=kappa0, alpha0=alpha0, beta0=beta0,
+       nIts=10000, scaleData=FALSE)
 result = calc_psms(outputdir)
 calls=maxpear(result$bigpsm, method="comp")
 print(dim(result$bigpsm))
 summary_dpmunc = produce_summary("DPMUnc", "x", calls$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsNovar"]])
-DPMUnc(simulation$obsData, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000, scaleData=FALSE)
+DPMUnc(simulation$obsData, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed,
+       kappa0=kappa0, alpha0=alpha0, beta0=beta0,
+       nIts=10000, scaleData=FALSE)
 result_novar = calc_psms(outputdir)
 calls_novar=maxpear(result_novar$bigpsm, method="comp")
 summary_dpmuncnovar = produce_summary("DPMUnc_novar", "x", calls_novar$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsLatents"]])
-DPMUnc(latents, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed, nIts=10000, scaleData=FALSE)
+DPMUnc(latents, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed,
+       kappa0=kappa0, alpha0=alpha0, beta0=beta0,
+       nIts=10000, scaleData=FALSE)
 result_latents = calc_psms(outputdir)
 calls_latents=maxpear(result_latents$bigpsm, method="comp")
 summary_dpmuncnovar_latents = produce_summary("DPMUnc_novar", "z", calls_latents$cl)
