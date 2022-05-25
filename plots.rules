@@ -1,0 +1,18 @@
+rule plots:
+    input:
+        "plots/example_simplex_datasets.png",
+        "plots/simplex_summary_plot.png",
+
+rule example_simplex:
+    output:
+        "plots/example_simplex_datasets.png",
+    script:
+        "scripts/plot_simplex_example.R"
+
+rule simplex_plots:
+    input:
+        "simplex_results/full_results.csv",
+    output:
+        "plots/simplex_summary_plot.png",
+    script:
+        "scripts/plot_results.R"

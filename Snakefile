@@ -1,18 +1,10 @@
-localrules: simplex_plots, simplex_simulations
+localrules: simplex_simulations
 
 wildcard_constraints:
     seed="\d+",
     n="\d+",
     d="\d+",
     k="\d+",
-
-rule simplex_plots:
-    input:
-        "simplex_results/full_results.csv",
-    output:
-        "simplex_results/summary_plot.png",
-    script:
-        "scripts/plot_results.R"
 
 rule simplex_simulations:
     input:
