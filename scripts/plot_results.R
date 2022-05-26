@@ -4,6 +4,7 @@ library(ggplot2)
 std <- function(x) sd(x)/sqrt(length(x))
 
 simplex_results = read.csv(snakemake@input[[1]])
+cbbPalette = c("#0072B2", "#D55E00", "#009E73", "#E69F00")
 
 summary_df = simplex_results %>%
   filter(d == 2, inferred_K) %>%
@@ -14,13 +15,21 @@ summary_df = simplex_results %>%
             true_k_mean = mean(true_k),
             estimated_k_mean = mean(estimated_k),
             estimated_k_se = std(estimated_k), .groups="keep") %>%
-  mutate(data = recode(data, x = 'observed', z = 'latent'))
+  mutate(data = recode(data, x = 'observed', z = 'latent'),
+         method = recode(method, DPMUnc_novar = "DPMZeroUnc"),
+         U = noise_factor,
+         N = var_latents)
 print(table(summary_df$nruns))
-g = ggplot(summary_df, aes(colour=method, y=ari_mean, x=noise_factor)) +
+g = ggplot(summary_df, aes(colour=method, y=ari_mean, x=U)) +
   geom_line() +
+  scale_colour_manual(values=cbbPalette) +
   geom_errorbar(aes(ymin=ari_mean - ari_se,
                     ymax=ari_mean + ari_se),
                 width=0.2) +
-  facet_grid(" var_latents ~ data" )
+  labs(y="Mean accuracy of clustering (ARI)",
+       colour="Method") +
+  theme(text=element_text(size=15),
+        legend.position = "bottom") +
+  facet_grid(" N ~ data", labeller = label_both)
 
-ggsave(snakemake@output[[1]], g, width=10, height=12, units="in")
+ggsave(snakemake@output[[1]], g, width=6, height=8, units="in")
