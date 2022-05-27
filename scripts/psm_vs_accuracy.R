@@ -36,6 +36,7 @@ se <- function(x) sqrt(var(x) / length(x))
 summary_df_U_N = combined_psm_vs_acc_df %>%
     group_by(psm_bin, U, N) %>%
     summarise(mean_acc = mean(same_true_cluster),
+              count = n(),
               se_acc = se(same_true_cluster), .groups="keep")
 
 #rmsq_df = summary_df_U_N %>%
@@ -46,13 +47,14 @@ summary_df_U_N = combined_psm_vs_acc_df %>%
 
 g = ggplot(summary_df_U_N,
        aes(x=psm_bin, y=mean_acc)) +
-    geom_point() +
+    geom_point(aes(size=count)) +
     facet_grid(N ~ U, labeller = label_both) +
 #    geom_errorbar(aes(ymin=mean_acc-1.96*se_acc, ymax=mean_acc+1.96*se_acc), width=.2) +
     geom_abline(slope=0.1, intercept=-0.05, colour="green") +
     theme(axis.text=element_text(size=8),
           axis.text.x= element_text(angle = 90, size=8, vjust=0.5)) +
     labs(x="Binned posterior similarity score",
+         size="Number of pairs",
          y="Proportion of pairs in same true cluster") +
     scale_y_continuous(limits=c(0, 1))
 ggsave("plots/psm_vs_acc_U_N_faceted.png", g, width=8, height=4, units="in")
