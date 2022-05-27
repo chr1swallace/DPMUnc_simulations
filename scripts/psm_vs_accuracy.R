@@ -77,9 +77,9 @@ summary_df = combined_psm_vs_acc_df %>%
 
 g = ggplot(summary_df,
        aes(x=psm_bin, y=mean_acc)) +
-    geom_point() +
 #    geom_errorbar(aes(ymin=mean_acc-1.96*se_acc, ymax=mean_acc+1.96*se_acc), width=.2) +
-    geom_abline(slope=0.1, intercept=-0.05, colour="green") +
+    geom_abline(slope=0.1, intercept=-0.05, colour="green4", size=2) +
+    geom_point(size=4) +
     labs(x="Binned posterior similarity score",
          y="Proportion of pairs in same true cluster") +
     scale_y_continuous(limits=c(0, 1))
