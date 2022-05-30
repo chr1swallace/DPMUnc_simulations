@@ -153,7 +153,7 @@ psm_links_df_both = rbind(psm_links_df, psm_links_df_novar)
 ggplot(NULL) +
   geom_segment(data=psm_links_df_both, aes(x=x1_from, y=x2_from, xend=x1_to, yend=x2_to, size=PSM, colour=PSM), alpha=0.5) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
-  geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
+  geom_point(data = simulation$df, size=2, mapping=aes(x=x1, y=x2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
   scale_size(limits=c(0, 1), guide="none", range=c(0, 1)) +
