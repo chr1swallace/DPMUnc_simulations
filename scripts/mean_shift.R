@@ -98,7 +98,7 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift.png", width=6, height=6, units="in", dpi=600)
+ggsave("plots/mean_shift.png", width=3, height=3, units="in", dpi=600)
 
 # Set hyperparameters for model
 alpha0 = 2; kappa0 = 0.5; beta0 = 0.2 * mean(apply(simulation$obsData, 2, var))
@@ -179,6 +179,7 @@ clusterMeans_novar = readClusterParams(file = paste0(outputdir_novar, "/clusterM
 clusterMeans_both = rbind(clusterMeans %>% mutate(res = "DPMUnc"),
 						  clusterMeans_novar %>% mutate(res = "DPMZeroUnc"))
 
+empirical_x_means = colMeans(simulation$obsData) %>% t() %>% data.frame()
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
   geom_point(data = simulation$df, size=2, mapping=aes(x=x1, y=x2), alpha=0.5) +
@@ -186,7 +187,8 @@ ggplot(NULL) +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
   geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "green", shape="square") + 
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_density_2d(data = clusterMeans_both, mapping=aes(x=X1, y=X2), colour="grey") +
+  geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
+  geom_density_2d(data = clusterMeans_both, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
   theme(axis.title=element_blank(),
         axis.ticks=element_blank(),
         axis.text=element_blank(),
@@ -201,12 +203,12 @@ ggplot(NULL) +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
   geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "green", shape="square") + 
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="grey") +
+  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
   theme(axis.title=element_blank(),
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans.png", width=6, height=6, units="in", dpi=600)
+ggsave("plots/mean_shift_latents_clustermeans.png", width=3, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -219,9 +221,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents.png", width=6, height=6, units="in", dpi=600)
-
-empirical_x_means = colMeans(simulation$obsData) %>% t() %>% data.frame()
+ggsave("plots/mean_shift_latents.png", width=3, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -231,9 +231,61 @@ ggplot(NULL) +
   geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "green", shape="square") + 
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
-  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="grey") +
+  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
   theme(axis.title=element_blank(),
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans_empirical.png", width=6, height=6, units="in", dpi=600)
+ggsave("plots/mean_shift_latents_clustermeans_empirical.png", width=3, height=3, units="in", dpi=600)
+
+clusterMeans = readClusterParamsSingle(file = paste0(outputdir, "/clusterMeans.csv"), nDim=2, nlines_skip=500)
+clusterMeans_novar = readClusterParamsSingle(file = paste0(outputdir_novar, "/clusterMeans.csv"), nDim=2, nlines_skip=500)
+
+clusterMeans_both = rbind(clusterMeans %>% mutate(res = "DPMUnc"),
+						  clusterMeans_novar %>% mutate(res = "DPMZeroUnc"))
+
+empirical_x_means = colMeans(simulation$obsData) %>% t() %>% data.frame()
+ggplot(NULL) +
+  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
+  geom_point(data = simulation$df, size=2, mapping=aes(x=x1, y=x2), alpha=0.5) +
+  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
+  geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "green", shape="square") + 
+  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
+  geom_density_2d(data = clusterMeans_both, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
+  theme(axis.title=element_blank(),
+        axis.ticks=element_blank(),
+        axis.text=element_blank(),
+        text=element_text(size=15)) +
+  facet_grid(. ~ res)
+ggsave("plots/mean_shift_latents_clustermeans_both_mu1.png", width=6, height=3, units="in", dpi=600)
+
+ggplot(NULL) +
+  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
+  geom_point(data = simulation$df, size=2, mapping=aes(x=x1, y=x2), alpha=0.5) +
+  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
+  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "green", shape="square") + 
+  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
+  theme(axis.title=element_blank(),
+        axis.ticks=element_blank(),
+        axis.text=element_blank(),
+        text=element_text(size=15))
+ggsave("plots/mean_shift_latents_clustermeans_mu1.png", width=3, height=3, units="in", dpi=600)
+
+ggplot(NULL) +
+  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
+  geom_point(data = simulation$df, size=2, mapping=aes(x=x1, y=x2), alpha=0.5) +
+  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
+  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "green", shape="square") + 
+  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
+  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
+  theme(axis.title=element_blank(),
+        axis.ticks=element_blank(),
+        axis.text=element_blank(),
+        text=element_text(size=15))
+ggsave("plots/mean_shift_latents_clustermeans_empirical_mu1.png", width=3, height=3, units="in", dpi=600)

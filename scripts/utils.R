@@ -6,6 +6,38 @@ library(gridExtra)
 library(magrittr)
 library(R.cache)
 
+readClusterParamsSingle = function(filepath, nDim, nlines_skip) {
+  values <- matrix(, nrow=0, ncol=nDim)
+  
+  con = file(filepath, "r")
+  continue = TRUE
+  line = readLines(con, n=nlines_skip)
+  while ( continue ) {
+    line = readLines(con, n = 1)
+    if ( length(line) == 0 ) {
+      continue = FALSE
+    } else {
+      if (grepl("tsv", filepath)) {
+        all_entries <- strsplit(trimws(line), "\\s+")[[1]]
+      } else {
+        all_entries <- strsplit(line, ",")[[1]]
+      }
+      if (length(all_entries) %% 2 != 0) {
+        print(line)
+        print(all_entries)
+        print(length(all_entries))
+      }
+      new_values <- matrix(as.numeric(all_entries), ncol=nDim)
+      if (nrow(new_values) == 1) {
+		  values <- rbind(values, new_values)
+	  }
+    }
+  }
+  
+  close(con)
+  df = data.frame(values)
+}
+
 readClusterParams = function(filepath, nDim, nlines_skip) {
   values <- matrix(, nrow=0, ncol=nDim)
   
