@@ -6,6 +6,45 @@ library(gridExtra)
 library(magrittr)
 library(R.cache)
 
+readClusterParams = function(filepath, nDim, nlines_skip) {
+  values <- matrix(, nrow=0, ncol=nDim)
+  
+  con = file(filepath, "r")
+  continue = TRUE
+  line = readLines(con, n=nlines_skip)
+  while ( continue ) {
+    line = readLines(con, n = 1)
+    if ( length(line) == 0 ) {
+      continue = FALSE
+    } else {
+      if (grepl("tsv", filepath)) {
+        all_entries <- strsplit(trimws(line), "\\s+")[[1]]
+      } else {
+        all_entries <- strsplit(line, ",")[[1]]
+      }
+      if (length(all_entries) %% 2 != 0) {
+        print(line)
+        print(all_entries)
+        print(length(all_entries))
+      }
+      new_values <- matrix(as.numeric(all_entries), ncol=nDim)
+      values <- rbind(values, new_values)
+    }
+  }
+  
+  close(con)
+  df = data.frame(values)
+}
+
+read_latent_obs <- function(file, d, burn_in=0.5) {
+    latents = fread(file)
+    n = as.integer(ncol(latents) / d)
+    trimmed_latents = latents[-c(1:(nrow(latents) * burn_in)),]
+    return (trimmed_latents %>%
+                data.frame() %>%
+                set_names(paste0("z", c(1:n, 1:n), "_", rep(1:d, each=n))))
+}
+
 save_pheatmap_png <- function(x, filename, width=1200, height=1000, res = 150) {
     png(filename, width = width, height = height, res = res)
     grid::grid.newpage()
@@ -90,13 +129,13 @@ calc_psms <- function(datasets) {
     allocs=lapply(paste0(datasets, "/clusterAllocations.csv"), fread)## read the allocations
     # This line is essential for some reason
     allocs %<>% lapply(., function(x) as.matrix(x[1:nrow(x),]))
-    #trimmed_allocs = lapply(allocs, function(x) x[-c(1:(nrow(x)/2)),])
-    bigalloc = do.call(rbind, allocs)
-    #bigalloc = trimmed_allocs %>% do.call("rbind",.) ## combine, discarding first 50%
+    trimmed_allocs = lapply(allocs, function(x) x[-c(1:(nrow(x)/2)),])
+    #bigalloc = do.call(rbind, allocs)
+    bigalloc = trimmed_allocs %>% do.call("rbind",.) ## combine, discarding first 50%
     bigpsm=calc_psm(bigalloc,burn=0.5) ## make a psm, don't discard any burn in because already discarded
 
-    psms = lapply(allocs, function(x) calc_psm(x, burn=0.5))
-    #psms = lapply(trimmed_allocs, function(x) calc_psm(x, burn=0))
+    #psms = lapply(allocs, function(x) calc_psm(x, burn=0.5))
+    psms = lapply(trimmed_allocs, function(x) calc_psm(x, burn=0))
     return(list(bigpsm=bigpsm, psms=psms))
 }
 
