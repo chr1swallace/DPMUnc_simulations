@@ -149,7 +149,7 @@ print(dim(result$bigpsm))
 summary_dpmunc = produce_summary("DPMUnc", "x", calls$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsNovar"]])
-DPMUnc(simulation$obsData, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed,
+DPMUnc(simulation$obsData, simulation$obsVars * 1e-10, saveFileDir = outputdir, seed=seed,
        kappa0=kappa0, alpha0=alpha0, beta0=beta0,
        nIts=10000, scaleData=FALSE)
 result_novar = calc_psms(outputdir)
@@ -157,7 +157,7 @@ calls_novar=maxpear(result_novar$bigpsm, method="comp")
 summary_dpmuncnovar = produce_summary("DPMUnc_novar", "x", calls_novar$cl)
 
 outputdir = dirname(snakemake@output[["clusterAllocationsLatents"]])
-DPMUnc(latents, simulation$obsVars / 100000, saveFileDir = outputdir, seed=seed,
+DPMUnc(latents, simulation$obsVars * 1e-10 , saveFileDir = outputdir, seed=seed,
        kappa0=kappa0, alpha0=alpha0, beta0=beta0,
        nIts=10000, scaleData=FALSE)
 result_latents = calc_psms(outputdir)
