@@ -25,7 +25,8 @@ generate_basic_uncertain_data <- function(n, d, k, var_latents, noise_factor, gr
   classes = sample(1:k, n, replace=TRUE)
   simulation_df = data.frame(class = classes, sample_id = paste0("sample_", 1:n))
 
-  obsVars_df = data.frame(matrix(rchisq(n*d,1), nrow=n, ncol=d)) * noise_factor
+  obsVars_df = data.frame(matrix(rep(rchisq(n,1), 2),
+                                 nrow=n, ncol=d)) * noise_factor
   colnames(obsVars_df) = paste0("sigmasq", 1:d)
   simulation_df = cbind(simulation_df, obsVars_df)
 
@@ -76,15 +77,14 @@ generate_basic_uncertain_data <- function(n, d, k, var_latents, noise_factor, gr
 seed=13
 d=2
 var_latents=2
-noise_factor=16
-k = 1
-n = 6
+noise_factor=10
+k = 2
+n = 40
 
-# These settings look good
 set.seed(13)
 group_means = data.frame(n_simplex(d))
 simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latents, noise_factor=noise_factor,
-                                           group_means=group_means[1, ])
+                                           group_means=group_means[1:2, ] * 20)
 
 cbbPalette = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
@@ -99,7 +99,7 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage.png", width=3, height=3, units="in", dpi=600)
 
 # Set hyperparameters for model
 alpha0 = 2; kappa0 = 0.5; beta0 = 0.2 * mean(apply(simulation$obsData, 2, var))
@@ -110,7 +110,7 @@ kmeans_solution = kmeans(simulation$obsData, centers=best_K, nstart=25)
 
 mclust_solution <- Mclust(simulation$obsData, x=mclustBIC(simulation$obsData))
 
-outputdir = paste0("mean_shift/", str_replace(as.character(as.POSIXlt(Sys.time())), " ", "_"), "/")
+outputdir = paste0("shrinkage/", str_replace(as.character(as.POSIXlt(Sys.time())), " ", "_"), "/")
 dir.create(outputdir, recursive = TRUE)
 print(dim(simulation$obsData))
 DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed,
@@ -120,7 +120,7 @@ DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=see
 result = calc_psms(outputdir)
 calls=maxpear(result$bigpsm, method="comp")
 
-outputdir_novar = paste0("mean_shift/", str_replace(as.character(as.POSIXlt(Sys.time())), " ", "_"), "/novar/")
+outputdir_novar = paste0("shrinkage/", str_replace(as.character(as.POSIXlt(Sys.time())), " ", "_"), "/novar/")
 dir.create(outputdir_novar, recursive = TRUE)
 DPMUnc(simulation$obsData, simulation$obsVars / 1000000000, saveFileDir = outputdir_novar, seed=seed,
        kappa0=kappa0, alpha0=alpha0, beta0=beta0,
@@ -129,22 +129,29 @@ DPMUnc(simulation$obsData, simulation$obsVars / 1000000000, saveFileDir = output
 result_novar = calc_psms(outputdir_novar)
 calls_novar=maxpear(result_novar$bigpsm, method="comp")
 
+print(calls)
+print(calls_novar)
+
 psm_links_df = result$bigpsm %>%
     data.frame() %>%
-    setNames(paste0("sample_", 1:6)) %>%
-    mutate(i=paste0("sample_", 1:6)) %>%
+    setNames(rownames(simulation$obsData)) %>%
+    mutate(i=rownames(simulation$obsData)) %>%
     pivot_longer(cols=-c(i), names_to="j", values_to="PSM") %>%
-    filter(i < j) %>%
+    mutate(i_int = as.integer(str_replace(i, "sample_", "")),
+           j_int = as.integer(str_replace(j, "sample_", ""))) %>%
+    filter(i_int < j_int) %>%
     merge(simulation$df %>% select(sample_id, x1, x2), by.x="i", by.y="sample_id") %>%
     merge(simulation$df %>% select(sample_id, x1, x2), by.x="j", by.y="sample_id", suffixes=c("_from", "_to")) %>%
     mutate(res = "DPMUnc")
 
 psm_links_df_novar = result_novar$bigpsm %>%
     data.frame() %>%
-    setNames(paste0("sample_", 1:6)) %>%
-    mutate(i=paste0("sample_", 1:6)) %>%
+    setNames(rownames(simulation$obsData)) %>%
+    mutate(i=rownames(simulation$obsData)) %>%
     pivot_longer(cols=-c(i), names_to="j", values_to="PSM") %>%
-    filter(i < j) %>%
+    mutate(i_int = as.integer(str_replace(i, "sample_", "")),
+           j_int = as.integer(str_replace(j, "sample_", ""))) %>%
+    filter(i_int < j_int) %>%
     merge(simulation$df %>% select(sample_id, x1, x2), by.x="i", by.y="sample_id") %>%
     merge(simulation$df %>% select(sample_id, x1, x2), by.x="j", by.y="sample_id", suffixes=c("_from", "_to")) %>%
     mutate(res = "DPMZeroUnc")
@@ -165,7 +172,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/mean_shift_psm_graph.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_psm_graph.png", width=6, height=3, units="in", dpi=600)
 
 latents = read_latent_obs(file = paste0(outputdir, "/latentObservations.csv"), d=d)
 mean_latents = matrix(colMeans(latents), ncol=d, nrow=n) %>% data.frame() %>% setNames(c("zhat1", "zhat2")) %>% mutate(res = "DPMUnc")
@@ -174,6 +181,8 @@ latents_novar = read_latent_obs(file = paste0(outputdir_novar, "/latentObservati
 mean_latents_novar = matrix(colMeans(latents_novar), ncol=d, nrow=n) %>% data.frame() %>% setNames(c("zhat1", "zhat2")) %>% mutate(res = "DPMZeroUnc")
 
 mean_latents_both = rbind(mean_latents, mean_latents_novar)
+mean_latents_both$sample_id = rownames(simulation$obsData)
+simulation$df = merge(simulation$df, mean_latents_both, by="sample_id")
 
 clusterMeans = readClusterParams(file = paste0(outputdir, "/clusterMeans.csv"), nDim=2, nlines_skip=500)
 clusterMeans_novar = readClusterParams(file = paste0(outputdir_novar, "/clusterMeans.csv"), nDim=2, nlines_skip=500)
@@ -181,15 +190,44 @@ clusterMeans_novar = readClusterParams(file = paste0(outputdir_novar, "/clusterM
 clusterMeans_both = rbind(clusterMeans %>% mutate(res = "DPMUnc"),
 						  clusterMeans_novar %>% mutate(res = "DPMZeroUnc"))
 
-empirical_x_means = colMeans(simulation$obsData) %>% t() %>% data.frame()
+ggplot(NULL) +
+  geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
+  geom_segment(data = simulation$df, aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), alpha=0.3) +
+  geom_point(data = simulation$df, mapping=aes(x=zhat1, y=zhat2, colour=factor({class})), shape="square") + 
+  stat_ellipse(data = simulation$df, mapping=aes(x=zhat1, y=zhat2, group=factor({class}), colour=factor({class}))) + 
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title=element_blank(),
+        axis.ticks=element_blank(),
+        axis.text=element_blank(),
+        text=element_text(size=15)) +
+  facet_grid(. ~ res)
+ggsave("plots/shrinkage_latents_both.png", width=6, height=3, units="in", dpi=600)
+
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
   geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
-  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
+  geom_segment(data = simulation$df, aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  stat_ellipse(data = simulation$df, mapping=aes(x=zhat1, y=zhat2, group=factor({class}))) + 
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title=element_blank(),
+        axis.ticks=element_blank(),
+        axis.text=element_blank(),
+        text=element_text(size=15)) +
+  facet_grid(. ~ res)
+ggsave("plots/shrinkage_latents_both_truelatents.png", width=6, height=3, units="in", dpi=600)
+
+ggplot(NULL) +
+  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
+  geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
+  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
+  geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_segment(data = simulation$df, aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_density_2d(data = clusterMeans_both, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
   theme_bw() +
   theme(legend.position = "none",
@@ -198,7 +236,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/mean_shift_latents_clustermeans_both.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents_clustermeans_both.png", width=6, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -206,7 +244,7 @@ ggplot(NULL) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
   geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
-  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_segment(data = simulation$df, aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
   theme_bw() +
   theme(legend.position = "none",
@@ -214,7 +252,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents_clustermeans.png", width=3, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -222,86 +260,21 @@ ggplot(NULL) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
   geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
-  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_segment(data = simulation$df, aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   theme_bw() +
   theme(legend.position = "none",
         axis.title=element_blank(),
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents.png", width=3, height=3, units="in", dpi=600)
 
-ggplot(NULL) +
-  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
-  geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
-  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
-  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
-  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.title=element_blank(),
-        axis.ticks=element_blank(),
-        axis.text=element_blank(),
-        text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans_empirical.png", width=3, height=3, units="in", dpi=600)
+clusterVars = readClusterParamsOfSize(file = paste0(outputdir, "/clusterVars.csv"), nDim=2, nlines_skip=500, requiredClusters=2)
+clusterVars_novar = readClusterParamsOfSize(file = paste0(outputdir_novar, "/clusterVars.csv"), nDim=2, nlines_skip=500, requiredClusters=2)
 
-clusterMeans = readClusterParamsOfSize(file = paste0(outputdir, "/clusterMeans.csv"), nDim=2, nlines_skip=500, requiredClusters=1)
-clusterMeans_novar = readClusterParamsOfSize(file = paste0(outputdir_novar, "/clusterMeans.csv"), nDim=2, nlines_skip=500, requiredClusters=1)
-
-clusterMeans_both = rbind(clusterMeans %>% mutate(res = "DPMUnc"),
-						  clusterMeans_novar %>% mutate(res = "DPMZeroUnc"))
-
-empirical_x_means = colMeans(simulation$obsData) %>% t() %>% data.frame()
-ggplot(NULL) +
-  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
-  geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
-  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
-  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
-  geom_density_2d(data = clusterMeans_both, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.title=element_blank(),
-        axis.ticks=element_blank(),
-        axis.text=element_blank(),
-        text=element_text(size=15)) +
-  facet_grid(. ~ res)
-ggsave("plots/mean_shift_latents_clustermeans_both_mu1.png", width=6, height=3, units="in", dpi=600)
-
-ggplot(NULL) +
-  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
-  geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
-  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
-  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.title=element_blank(),
-        axis.ticks=element_blank(),
-        axis.text=element_blank(),
-        text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans_mu1.pdf", width=3, height=3, units="in", dpi=600)
-
-ggplot(NULL) +
-  geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
-  geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
-  geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
-  geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
-  geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
-  geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.title=element_blank(),
-        axis.ticks=element_blank(),
-        axis.text=element_blank(),
-        text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans_empirical_mu1.png", width=3, height=3, units="in", dpi=600)
+clusterVars_both = rbind(clusterVars %>% mutate(res = "DPMUnc"),
+						 clusterVars_novar %>% mutate(res = "DPMZeroUnc"))
+ggplot(clusterVars_both, aes(x=X1)) +
+    geom_histogram(aes(y = stat(count / sum(count)))) +
+    facet_grid(res ~ .)
+ggsave("plots/clusterVar2_hist.png", width=3, height=6, units="in", dpi=600)

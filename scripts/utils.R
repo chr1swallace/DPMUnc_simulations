@@ -6,7 +6,7 @@ library(gridExtra)
 library(magrittr)
 library(R.cache)
 
-readClusterParamsSingle = function(filepath, nDim, nlines_skip) {
+readClusterParamsOfSize = function(filepath, nDim, nlines_skip, requiredClusters) {
   values <- matrix(, nrow=0, ncol=nDim)
   
   con = file(filepath, "r")
@@ -28,7 +28,7 @@ readClusterParamsSingle = function(filepath, nDim, nlines_skip) {
         print(length(all_entries))
       }
       new_values <- matrix(as.numeric(all_entries), ncol=nDim)
-      if (nrow(new_values) == 1) {
+      if (nrow(new_values) == requiredClusters) {
 		  values <- rbind(values, new_values)
 	  }
     }
