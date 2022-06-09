@@ -187,7 +187,7 @@ ggplot(NULL) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
   geom_density_2d(data = clusterMeans_both, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
@@ -205,7 +205,7 @@ ggplot(NULL) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
   theme_bw() +
@@ -221,7 +221,7 @@ ggplot(NULL) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   theme_bw() +
   theme(legend.position = "none",
@@ -236,7 +236,7 @@ ggplot(NULL) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
   geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
@@ -260,7 +260,7 @@ ggplot(NULL) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_point(data = mean_latents_both, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
   geom_density_2d(data = clusterMeans_both, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
@@ -278,7 +278,7 @@ ggplot(NULL) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
   theme_bw() +
@@ -294,7 +294,7 @@ ggplot(NULL) +
   geom_point(data = simulation$df, mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
   geom_segment(data = simulation$df, aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = simulation$df, size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
-  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") + 
+  geom_point(data = mean_latents, mapping=aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
   geom_segment(data = cbind(simulation$df, mean_latents), aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
   geom_point(data = empirical_x_means, mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x") +
   geom_density_2d(data = clusterMeans, mapping=aes(x=X1, y=X2), colour="goldenrod2") +
@@ -305,3 +305,38 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15))
 ggsave("plots/mean_shift_latents_clustermeans_empirical_mu1.png", width=3, height=3, units="in", dpi=600)
+
+
+# Plots to do manually to get legend
+library(ggplot2)
+
+data = data.frame(matrix(rnorm(1000000), ncol=2))
+g = ggplot(data) +
+  geom_density_2d(aes(x=X1, y=X2), colour="goldenrod2") +
+  theme_minimal()
+
+g + theme_classic() + coord_cartesian(xlim=c(-25, 25), ylim=c(-25, 25))
+
+gap = 0.2
+points_df = data.frame(z1=1, z2=gap*2, x1=1, x2=gap*1, zhat1=1, zhat2=gap*0, sigmasq2=1)
+labels_df = data.frame(x = c(rep(1.05, 3), rep(1.45, 3)),
+                       y = c((0:2) * gap,
+                             (0:2) * gap),
+                       labels = c("Inferred latent point",
+                                  "Observed point",
+                                  "Latent point",
+
+                                  "Inferred cluster mean density",
+                                  "Empirical mean",
+                                  "Cluster mean"))
+ggplot(points_df) +
+  theme_classic() +
+  geom_segment(aes(x=z1, y=z2, xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_segment(aes(x=x1, y=x2, xend=zhat1, yend=zhat2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_point(aes(x=z1, y=z2), size=2, shape=1) +
+  geom_point(aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
+  geom_point(aes(x=zhat1, y=zhat2), colour = "red", shape="square") +
+  geom_point(data = data.frame(mu1 = 1.4, mu2 = gap * 2), size=1, shape=2, mapping=aes(x=mu1, y=mu2)) +
+  geom_point(data = data.frame(x1 = 1.4, x2 = gap), mapping=aes(x=x1, y=x2), colour="deepskyblue", size=10, shape="x")  +
+  geom_text(data = labels_df, aes(x, y, label=labels), hjust="left") +
+  coord_cartesian(xlim = c(0.8, 1.8), ylim=c(-1, 2))
