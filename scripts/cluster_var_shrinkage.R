@@ -271,5 +271,18 @@ clusterVars_both = rbind(clusterVars %>% mutate(res = "DPMUnc"),
 						 clusterVars_novar %>% mutate(res = "DPMZeroUnc"))
 ggplot(clusterVars_both, aes(x=X1)) +
     geom_histogram(aes(y = stat(count / sum(count)))) +
+    geom_vline(data=filter(clusterVars_both, res=="DPMUnc"), aes(xintercept = median(X1)),col='red') +
+    geom_vline(data=filter(clusterVars_both, res=="DPMZeroUnc"), aes(xintercept = median(X1)),col='red') +
+    labs(x="Inferred cluster variance", y="Proportion") +
     facet_grid(res ~ .)
-ggsave("plots/clusterVar2_hist.png", width=3, height=6, units="in", dpi=600)
+ggsave("plots/clusterVar2_hist.png", width=3, height=4, units="in", dpi=600)
+
+ggplot(clusterVars_both, aes(x=X1, group=res, fill=res)) +
+    geom_density(alpha=0.5) +
+    labs(x="Inferred cluster variance", fill="Method")
+ggsave("plots/clusterVar2_density.png", width=6, height=3, units="in", dpi=600)
+
+t.test(clusterVars_both %>% filter(res=="DPMUnc") %>% select(X1),
+       clusterVars_both %>% filter(res=="DPMZeroUnc") %>% select(X1))
+t.test(clusterVars_both %>% filter(res=="DPMUnc") %>% select(X2),
+       clusterVars_both %>% filter(res=="DPMZeroUnc") %>% select(X2))
