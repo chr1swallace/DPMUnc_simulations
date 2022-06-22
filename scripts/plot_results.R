@@ -3,6 +3,7 @@ library(ggplot2)
 
 std <- function(x) sd(x)/sqrt(length(x))
 
+#simplex_results = read.csv("simplex_results/full_results.csv") #snakemake@input[[1]])
 simplex_results = read.csv(snakemake@input[[1]])
 cbbPalette = c("#0072B2", "#D55E00", "#009E73", "#E69F00")
 
@@ -30,6 +31,7 @@ g = ggplot(summary_df, aes(colour=method, y=ari_mean, x=U)) +
        colour="Method") +
   theme(text=element_text(size=15),
         legend.position = "bottom") +
+  scale_x_continuous(breaks = unique(summary_df$U)) +
   facet_grid(" N ~ data", labeller = label_both)
 
 ggsave(snakemake@output[[1]], g, width=6, height=8, units="in")
