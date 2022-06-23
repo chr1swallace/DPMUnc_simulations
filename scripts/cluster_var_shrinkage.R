@@ -1,5 +1,6 @@
 library(cluster)
 library(dplyr)
+library(ggforce)
 library(ggplot2)
 library(mclust)
 library(mcclust)
@@ -87,6 +88,7 @@ simulation = generate_basic_uncertain_data(n=n, d=d, k=k, var_latents=var_latent
                                            group_means=group_means[1:2, ] * 20)
 
 cbbPalette = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
   geom_point(size=2, shape=1) +
   geom_point(mapping=aes(x=x1, y=x2, size=sigmasq2), alpha=0.5) +
@@ -99,6 +101,24 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.text=element_blank(),
         text=element_text(size=15))
 ggsave("plots/shrinkage.png", width=3, height=3, units="in", dpi=600)
+
+simulation$df$radius = 1.96 * (simulation$df$sigmasq1 ** (1/2))
+g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
+  geom_point(size=2, shape=1) +
+  geom_point(mapping=aes(x=x1, y=x2)) +
+  geom_segment(aes(xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_circle(mapping=aes(x0=x1, y0=x2, r=radius,
+                          fill=factor({class}), colour=factor({class})),
+              alpha=0.1, inherit.aes = FALSE) +
+  scale_colour_manual(values=cbbPalette) +
+  scale_fill_manual(values=cbbPalette) +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title=element_blank(),
+        axis.ticks=element_blank(),
+        axis.text=element_blank(),
+        text=element_text(size=15))
+ggsave("plots/shrinkage_with_se.png", width=3, height=3, units="in", dpi=600)
 
 # Set hyperparameters for model
 alpha0 = 2; kappa0 = 0.5; beta0 = 0.2 * mean(apply(simulation$obsData, 2, var))

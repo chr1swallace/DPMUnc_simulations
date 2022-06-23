@@ -1,6 +1,7 @@
 library(cluster)
 library(dplyr)
 library(ggplot2)
+library(ggforce)
 library(mclust)
 library(mcclust)
 library(stringr)
@@ -100,6 +101,25 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.text=element_blank(),
         text=element_text(size=15))
 ggsave("plots/mean_shift.png", width=3, height=3, units="in", dpi=600)
+
+simulation$df$radius_1 = 1.96 * (simulation$df$sigmasq1 ** (1/2))
+simulation$df$radius_2 = 1.96 * (simulation$df$sigmasq2 ** (1/2))
+g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
+  geom_point(size=2, shape=1) +
+  geom_point(mapping=aes(x=x1, y=x2)) +
+  geom_segment(aes(xend=x1, yend=x2), arrow=arrow(length = unit(0.01, "npc")), colour="grey") +
+  geom_ellipse(mapping=aes(x0=x1, y0=x2, a=radius_1, b=radius_2,
+                          fill=factor({class}), colour=factor({class}), angle=0),
+              alpha=0.1, inherit.aes = FALSE) +
+  scale_colour_manual(values=cbbPalette) +
+  scale_fill_manual(values=cbbPalette) +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title=element_blank(),
+        axis.ticks=element_blank(),
+        axis.text=element_blank(),
+        text=element_text(size=15))
+ggsave("plots/mean_shift_with_se.png", width=3, height=3, units="in", dpi=600)
 
 # Set hyperparameters for model
 alpha0 = 2; kappa0 = 0.5; beta0 = 0.2 * mean(apply(simulation$obsData, 2, var))
