@@ -129,14 +129,14 @@ summary_kmeans_true = produce_summary("kmeans", "x", kmeans_solution_true$cluste
 kmeans_solution_true_latents = kmeans(latents, centers=true_k, nstart=25)
 summary_kmeans_true_latents = produce_summary("kmeans", "z", kmeans_solution_true_latents$cluster, FALSE)
 
-mclust_solution <- Mclust(simulation$obsData, modelNames=c("VVI"))
-summary_mclust = produce_summary("mclust_VVI", "x", mclust_solution$classification)
+mclust_solution <- Mclust(simulation$obsData)
+summary_mclust = produce_summary("mclust", "x", mclust_solution$classification)
 
-mclust_solution_latents <- Mclust(latents, modelNames=c("VVI"))
-summary_mclust_latents = produce_summary("mclust_VVI", "z", mclust_solution_latents$classification)
+mclust_solution_latents <- Mclust(latents)
+summary_mclust_latents = produce_summary("mclust", "z", mclust_solution_latents$classification)
 
-summary_mclust_true = produce_summary("mclust_EII", "x", Mclust(simulation$obsData, modelNames=c("EII"))$classification)
-summary_mclust_latents_true = produce_summary("mclust_EII", "z", Mclust(latents, modelNames=c("EII"))$classification)
+summary_mclust_true = produce_summary("mclust", "x", Mclust(simulation$obsData, G=true_k)$classification, FALSE)
+summary_mclust_latents_true = produce_summary("mclust", "z", Mclust(latents, G=true_k)$classification, FALSE)
 
 outputdir = dirname(snakemake@output[["clusterAllocations"]])
 print(dim(simulation$obsData))
