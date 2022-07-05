@@ -17,7 +17,9 @@ rule simplex_plots:
     input:
         "simplex_results/full_results.csv",
     output:
-        "plots/simplex_summary_plot.pdf",
+        ari="plots/simplex_summary_plot.pdf",
+        K_line="plots/simplex_summary_plot_K_line.pdf",
+        K_hist="plots/simplex_summary_plot_K_hist.pdf",
     script:
         "scripts/plot_results.R"
 
