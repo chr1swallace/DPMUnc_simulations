@@ -57,7 +57,7 @@ g = ggplot(summary_df_U_N,
          size="Number of pairs",
          y="Proportion of pairs in same true cluster") +
     scale_y_continuous(limits=c(0, 1))
-ggsave("plots/psm_vs_acc_U_N_faceted.png", g, width=8, height=4, units="in")
+ggsave("plots/psm_vs_acc_U_N_faceted.pdf", g, width=8, height=4, units="in")
 
 g = ggplot(summary_df_U_N,
        aes(x=psm_bin, y=mean_acc, colour=U)) +
@@ -68,7 +68,7 @@ g = ggplot(summary_df_U_N,
     labs(x="Binned posterior similarity score",
          y="Proportion of pairs in same true cluster") +
     scale_y_continuous(limits=c(0, 1))
-ggsave("plots/psm_vs_acc_U_N.png", g, width=10, height=6, units="in")
+ggsave("plots/psm_vs_acc_U_N.pdf", g, width=10, height=6, units="in")
 
 summary_df = combined_psm_vs_acc_df %>%
     group_by(psm_bin) %>%
@@ -83,7 +83,7 @@ g = ggplot(summary_df,
     labs(x="Binned posterior similarity score",
          y="Proportion of pairs in same true cluster") +
     scale_y_continuous(limits=c(0, 1))
-ggsave("plots/psm_vs_acc.png", g, width=6, height=6, units="in")
+ggsave("plots/psm_vs_acc.pdf", g, width=6, height=6, units="in")
 
 g = ggplot(combined_psm_vs_acc_df, aes(x=PSM)) +
     geom_histogram(bins=10) +
@@ -93,4 +93,4 @@ g = ggplot(combined_psm_vs_acc_df, aes(x=PSM)) +
           axis.ticks.y=element_blank(),
           axis.text.y=element_blank()) +
     facet_grid(N ~ U, labeller = label_both)
-ggsave("plots/psm_hist.png", g, width=8, height=4, units="in")
+ggsave("plots/psm_hist.pdf", g, width=8, height=4, units="in")

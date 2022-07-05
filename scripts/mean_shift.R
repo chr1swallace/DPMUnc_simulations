@@ -100,7 +100,7 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift.pdf", width=3, height=3, units="in", dpi=600)
 
 simulation$df$radius_1 = 1.96 * (simulation$df$sigmasq1 ** (1/2))
 simulation$df$radius_2 = 1.96 * (simulation$df$sigmasq2 ** (1/2))
@@ -119,7 +119,7 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_with_se.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift_with_se.pdf", width=3, height=3, units="in", dpi=600)
 
 # Set hyperparameters for model
 alpha0 = 2; kappa0 = 0.5; beta0 = 0.2 * mean(apply(simulation$obsData, 2, var))
@@ -185,7 +185,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/mean_shift_psm_graph.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift_psm_graph.pdf", width=6, height=3, units="in", dpi=600)
 
 latents = read_latent_obs(file = paste0(outputdir, "/latentObservations.csv"), d=d)
 mean_latents = matrix(colMeans(latents), ncol=d, nrow=n) %>% data.frame() %>% setNames(c("zhat1", "zhat2")) %>% mutate(res = "DPMUnc")
@@ -218,7 +218,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/mean_shift_latents_clustermeans_both.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift_latents_clustermeans_both.pdf", width=6, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -234,7 +234,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift_latents_clustermeans.pdf", width=3, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -249,7 +249,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift_latents.pdf", width=3, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -266,7 +266,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans_empirical.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift_latents_clustermeans_empirical.pdf", width=3, height=3, units="in", dpi=600)
 
 clusterMeans = readClusterParamsOfSize(file = paste0(outputdir, "/clusterMeans.csv"), nDim=2, nlines_skip=500, requiredClusters=1)
 clusterMeans_novar = readClusterParamsOfSize(file = paste0(outputdir_novar, "/clusterMeans.csv"), nDim=2, nlines_skip=500, requiredClusters=1)
@@ -291,6 +291,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
+# Keep as png so we can manually add legend with imagemagick
 ggsave("plots/mean_shift_latents_clustermeans_both_mu1.png", width=6, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
@@ -324,7 +325,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/mean_shift_latents_clustermeans_empirical_mu1.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/mean_shift_latents_clustermeans_empirical_mu1.pdf", width=3, height=3, units="in", dpi=600)
 
 
 # Plots to do manually to get legend

@@ -100,7 +100,7 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/shrinkage.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage.pdf", width=3, height=3, units="in", dpi=600)
 
 simulation$df$radius = 1.96 * (simulation$df$sigmasq1 ** (1/2))
 g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
@@ -118,7 +118,7 @@ g = ggplot(simulation$df, aes(x=z1, y=z2, colour=factor({class}))) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/shrinkage_with_se.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_with_se.pdf", width=3, height=3, units="in", dpi=600)
 
 # Set hyperparameters for model
 alpha0 = 2; kappa0 = 0.5; beta0 = 0.2 * mean(apply(simulation$obsData, 2, var))
@@ -190,7 +190,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/shrinkage_psm_graph.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_psm_graph.pdf", width=6, height=3, units="in", dpi=600)
 
 latents = read_latent_obs(file = paste0(outputdir, "/latentObservations.csv"), d=d)
 mean_latents = matrix(colMeans(latents), ncol=d, nrow=n) %>% data.frame() %>% setNames(c("zhat1", "zhat2")) %>% mutate(res = "DPMUnc")
@@ -221,7 +221,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/shrinkage_latents_both.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents_both.pdf", width=6, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -237,7 +237,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/shrinkage_latents_both_truelatents.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents_both_truelatents.pdf", width=6, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -253,7 +253,7 @@ ggplot(NULL) +
         axis.text=element_blank(),
         text=element_text(size=15)) +
   facet_grid(. ~ res)
-ggsave("plots/shrinkage_latents_clustermeans_both.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents_clustermeans_both.pdf", width=6, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -268,7 +268,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/shrinkage_latents_clustermeans.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents_clustermeans.pdf", width=3, height=3, units="in", dpi=600)
 
 ggplot(NULL) +
   geom_point(data = simulation$df, aes(x=z1, y=z2), size=2, shape=1) +
@@ -282,7 +282,7 @@ ggplot(NULL) +
         axis.ticks=element_blank(),
         axis.text=element_blank(),
         text=element_text(size=15))
-ggsave("plots/shrinkage_latents.png", width=3, height=3, units="in", dpi=600)
+ggsave("plots/shrinkage_latents.pdf", width=3, height=3, units="in", dpi=600)
 
 clusterVars = readClusterParamsOfSize(file = paste0(outputdir, "/clusterVars.csv"), nDim=2, nlines_skip=500, requiredClusters=2)
 clusterVars_novar = readClusterParamsOfSize(file = paste0(outputdir_novar, "/clusterVars.csv"), nDim=2, nlines_skip=500, requiredClusters=2)
@@ -295,12 +295,12 @@ ggplot(clusterVars_both, aes(x=X1)) +
     geom_vline(data=filter(clusterVars_both, res=="DPMZeroUnc"), aes(xintercept = median(X1)),col='red') +
     labs(x="Inferred cluster variance", y="Proportion") +
     facet_grid(res ~ .)
-ggsave("plots/clusterVar2_hist.png", width=3, height=4, units="in", dpi=600)
+ggsave("plots/clusterVar2_hist.pdf", width=3, height=4, units="in", dpi=600)
 
 ggplot(clusterVars_both, aes(x=X1, group=res, fill=res)) +
     geom_density(alpha=0.5) +
     labs(x="Inferred cluster variance", fill="Method")
-ggsave("plots/clusterVar2_density.png", width=6, height=3, units="in", dpi=600)
+ggsave("plots/clusterVar2_density.pdf", width=6, height=3, units="in", dpi=600)
 
 t.test(clusterVars_both %>% filter(res=="DPMUnc") %>% select(X1),
        clusterVars_both %>% filter(res=="DPMZeroUnc") %>% select(X1))

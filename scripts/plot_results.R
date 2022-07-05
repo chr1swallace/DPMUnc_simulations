@@ -3,9 +3,9 @@ library(ggplot2)
 
 std <- function(x) sd(x)/sqrt(length(x))
 
-#simplex_results = read.csv("simplex_results/full_results.csv") #snakemake@input[[1]])
-simplex_results = read.csv(snakemake@input[[1]])
-cbbPalette = c("#0072B2", "#D55E00", "#009E73", "#E69F00")
+simplex_results = read.csv("simplex_results/full_results.csv") #snakemake@input[[1]])
+#simplex_results = read.csv(snakemake@input[[1]])
+cbbPalette = c("#0072B2", "#D55E00", "#009E73", "#E69F00", "#00FFFF")
 
 summary_df = simplex_results %>%
   filter(d == 2, inferred_K) %>%

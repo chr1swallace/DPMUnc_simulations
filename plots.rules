@@ -1,11 +1,15 @@
 rule plots:
     input:
-        "plots/example_simplex_datasets.png",
-        "plots/simplex_summary_plot.png",
+        "plots/example_simplex_datasets.pdf",
+        "plots/simplex_summary_plot.pdf",
+        "plots/shrinkage.pdf",
+        "plots/mean_shift.pdf",
+        "plots/psm_vs_acc.pdf",
+        "plots/psm_hist.pdf",
 
 rule example_simplex:
     output:
-        "plots/example_simplex_datasets.png",
+        "plots/example_simplex_datasets.pdf",
     script:
         "scripts/plot_simplex_example.R"
 
@@ -13,6 +17,26 @@ rule simplex_plots:
     input:
         "simplex_results/full_results.csv",
     output:
-        "plots/simplex_summary_plot.png",
+        "plots/simplex_summary_plot.pdf",
     script:
         "scripts/plot_results.R"
+
+rule shrinkage:
+    output:
+        "plots/clusterVar2_hist.pdf",
+        "plots/shrinkage.pdf",
+    shell:
+        "Rscript scripts/cluster_var_shrinkage.R"
+
+rule mean_shift:
+    output:
+        "plots/mean_shift.pdf",
+    shell:
+        "Rscript scripts/mean_shift.R"
+
+rule psm_vs_accuracy:
+    output:
+        "plots/psm_vs_acc.pdf",
+        "plots/psm_hist.pdf",
+    shell:
+        "Rscript scripts/psm_vs_accuracy.R"
