@@ -18,6 +18,7 @@ rule simplex_plots:
         "simplex_results/full_results.csv",
     output:
         ari="plots/simplex_summary_plot.pdf",
+        ari_nolatent="plots/simplex_summary_plot_nolatent.pdf",
         K_line="plots/simplex_summary_plot_K_line.pdf",
         K_hist="plots/simplex_summary_plot_K_hist.pdf",
     script:
