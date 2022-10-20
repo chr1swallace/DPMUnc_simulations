@@ -80,17 +80,22 @@ g = ggplot(summary_df,
 #    geom_errorbar(aes(ymin=mean_acc-1.96*se_acc, ymax=mean_acc+1.96*se_acc), width=.2) +
     geom_abline(slope=0.1, intercept=-0.05, colour="green4", size=2) +
     geom_point(size=4) +
+    theme_light() +
+    theme(axis.text=element_text(size=rel(0.7))) +
     labs(x="Binned posterior similarity score",
          y="Proportion of pairs in same true cluster") +
     scale_y_continuous(limits=c(0, 1))
-ggsave("plots/psm_vs_acc.pdf", g, width=6, height=6, units="in")
+ggsave("plots/psm_vs_acc.pdf", g, width=6, height=4, units="in")
 
 g = ggplot(combined_psm_vs_acc_df, aes(x=PSM)) +
-    geom_histogram(bins=10) +
+    geom_histogram(bins=11) +
     labs(x = "Posterior similarity",
          y = "") +
+    theme_light() +
+    scale_x_continuous(limits = c(0, 1), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
     theme(axis.title.y=element_blank(),
           axis.ticks.y=element_blank(),
-          axis.text.y=element_blank()) +
+          axis.text.y=element_blank(),
+          axis.text.x=element_text(size=rel(0.8))) +
     facet_grid(N ~ U, labeller = label_both)
-ggsave("plots/psm_hist.pdf", g, width=8, height=4, units="in")
+ggsave("plots/psm_hist.pdf", g, width=6, height=3, units="in")
