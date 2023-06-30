@@ -2,6 +2,7 @@ library(cluster)
 library(DPMUnc)
 library(mclust)
 library(mcclust)
+library(sirt)
 
 source("scripts/utils.R")
 
@@ -75,10 +76,20 @@ generate_basic_uncertain_data <- function(n, d, k, var_latents, noise_factor, gr
                obsData=obsData))
 }
 
-seed=as.numeric(snakemake@wildcards[['seed']])
-d=as.numeric(snakemake@wildcards[['d']])
-var_latents=as.numeric(snakemake@wildcards[['var_latents']])
-noise_factor=as.numeric(snakemake@wildcards[['noise_factor']])
+if(exists("snakemake")) {
+    seed=as.numeric(snakemake@wildcards[['seed']])
+    d=as.numeric(snakemake@wildcards[['d']])
+    var_latents=as.numeric(snakemake@wildcards[['var_latents']])
+    noise_factor=as.numeric(snakemake@wildcards[['noise_factor']])
+outputdir = dirname(snakemake@output[["clusterAllocations"]])
+} else { # some defaults for interactive debugging
+    seed=42
+    d=2
+    var_latents=9
+    noise_factor=10
+    outputdir=tempdir()
+}
+
 k = d + 1
 n = k * 10
 
@@ -138,7 +149,12 @@ summary_mclust_latents = produce_summary("mclust", "z", mclust_solution_latents$
 summary_mclust_true = produce_summary("mclust", "x", Mclust(simulation$obsData, G=true_k)$classification, FALSE)
 summary_mclust_latents_true = produce_summary("mclust", "z", Mclust(latents, G=true_k)$classification, FALSE)
 
-outputdir = dirname(snakemake@output[["clusterAllocations"]])
+## additional methods
+fuzcluster_solution=fuzcluster(simulation$obsData, sqrt(simulation$obsVars), K=best_K)
+summary_fuzcluster=produce_summary("fuzcluster","x", apply(fuzcluster_solution$posterior,1,which.max))
+fuzcluster_solution_true=fuzcluster(simulation$obsData, sqrt(simulation$obsVars), K=true_k)
+summary_fuzcluster_true=produce_summary("fuzcluster","x", apply(fuzcluster_solution_true$posterior,1,which.max), FALSE)
+
 print(dim(simulation$obsData))
 DPMUnc(simulation$obsData, simulation$obsVars, saveFileDir = outputdir, seed=seed,
        kappa0=kappa0, alpha0=alpha0, beta0=beta0,
@@ -148,6 +164,7 @@ calls=maxpear(result$bigpsm, method="comp")
 print(dim(result$bigpsm))
 summary_dpmunc = produce_summary("DPMUnc", "x", calls$cl)
 
+if(exists("snakemake")) {
 outputdir = dirname(snakemake@output[["clusterAllocationsNovar"]])
 DPMUnc(simulation$obsData, simulation$obsVars * 1e-10, saveFileDir = outputdir, seed=seed,
        kappa0=kappa0, alpha0=alpha0, beta0=beta0,
@@ -163,6 +180,7 @@ DPMUnc(latents, simulation$obsVars * 1e-10 , saveFileDir = outputdir, seed=seed,
 result_latents = calc_psms(outputdir)
 calls_latents=maxpear(result_latents$bigpsm, method="comp")
 summary_dpmuncnovar_latents = produce_summary("DPMUnc_novar", "z", calls_latents$cl)
+}
 
 results = as.data.frame(do.call(rbind,
                                 list(summary_kmeans,
@@ -173,12 +191,15 @@ results = as.data.frame(do.call(rbind,
                                      summary_mclust_latents,
                                      summary_mclust_true,
                                      summary_mclust_latents_true,
+                                     summary_fuzcluster,
+                                     summary_fuzcluster_true,
                                      summary_dpmunc,
                                      produce_summary("DPMUnc", "x", cut_at_k(result, true_k), FALSE),
                                      summary_dpmuncnovar,
                                      summary_dpmuncnovar_latents,
                                      produce_summary("DPMUnc_novar", "x", cut_at_k(result_novar, true_k), FALSE),
-                                     produce_summary("DPMUnc_novar", "z", cut_at_k(result_latents, true_k), FALSE))))
+                                     produce_summary("DPMUnc_novar", "z", cut_at_k(result_latents, true_k), FALSE)
+                                     )))
 results
 print(class(results))
 
